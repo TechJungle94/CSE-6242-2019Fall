@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+		<meta charset="utf-8">
+		<title>Lego Sets by Year from Rebrickable</title>
+		<script type="text/javascript" src="lib/d3/d3.min.js"></script>
+		<style type="text/css">
+
+		
+		</style>
+
+	</head>
+	<body>
+		<script type="text/javascript">
+
+			var width = 1500;
+            var height = 500;
+            var padding={top:70,bottom:40,right:20,left:120};
+            var interval=5;
+
+			var year = [];
+            var running_total = [];
+			var svg = d3.select("body").append("svg").attr("height",height).attr("width",width);
+
+            d3.csv("q3.csv", function(data) {
+                year.push(parseInt(data.year));
+                running_total.push(parseInt(data.running_total,10));    
+            }).then(function(data){
+
+                running_total.splice(2,0,0,0);
+
+            	var yearS=d3.scaleTime().domain([new Date(d3.min(year)+""),new Date(d3.max(year)+"")]).rangeRound([padding.left,width-padding.right]);
+
+            	var dataS=d3.scaleLinear().nice().domain([0,d3.max(running_total)]).range([0,height-padding.top-padding.bottom]);
+
+            	var yS=d3.scaleLinear().nice().domain([0,d3.max(running_total)]).range([height-padding.bottom,padding.top]);
+
+            	var xAxis=d3.axisBottom(yearS).scale(yearS).ticks(d3.timeYear.every(3));
+
+            	var gX=svg.append("g").attr("class", "axis").attr("transform","translate(0,"+(height - padding.bottom)+")");
+            	
+                gX.call(xAxis);
+
+            	var yAxis=d3.axisLeft(yS).scale(yS);
+
+            	var gY=svg.append("g").attr("class", "axis").attr("transform","translate("+padding.left+",0)");
+
+            	gY.call(yAxis);
+
+            	svg.append("text").attr("x", width-padding.right-70).attr("y", height-padding.bottom+35).text("dzhang373");
+
+                svg.append("text").attr("x", width/2-100).attr("y", 50).text("Lego Sets by Year from Rebrickable").attr("font-size", "20px");    
+
+            	svg.selectAll("rect").data(running_total).enter().append("rect").attr("fill","purple").attr("x",(d,i)=>padding.left+i*((width-padding.right-padding.left)/running_total.length)).attr("y",(d,i)=>height-padding.bottom-dataS(d)).attr("width",width/running_total.length-interval).attr("height",d=>dataS(d));
+          		
+            	})
+			
+		</script>
+	
+</body>
+</html>
