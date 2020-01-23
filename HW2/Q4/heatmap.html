@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+		<meta charset="utf-8">
+		<title>Earthquake</title>
+		<script type="text/javascript" src="../lib/d3.v5.min.js"></script>
+		<style type="text/css">
+
+
+
+
+		
+		</style>
+
+	</head>
+	<body>
+
+
+		<script type="text/javascript">
+
+			var width = 1500;
+            var height = 800;
+            var padding={top:200,bottom:200,right:100,left:100};
+            var interval=5;
+
+			var States = [];
+            var Category=["0 to 9","10 to 99","100 to 499","500 or above"];
+            var data1=[];
+            var num=[];
+            var category1=[];
+            var category2=[];
+            var category3=[];
+            var category4=[];
+
+
+			var svg = d3.select("body").append("svg").attr("height",height).attr("width",width);
+			
+			svg.append("text").attr("x", width/2-500).attr("y", padding.top-70).text("Visualizing Earthquake Counts by States 2010-2015(M3+)").attr("font-size", "40px"); 
+            
+            svg.append("text").attr("x", width/2-400).attr("y", padding.top-20).text("Range of").attr("font-size", "25px");    
+
+
+            d3.csv("earthquakes.csv", function(data) {
+                States.push(data.States);
+
+                data1.push({States:data.States,year:parseInt(2010),num:parseInt(data[2010]),Category:data.Category});
+                data1.push({States:data.States,year:parseInt(2011),num:parseInt(data[2011]),Category:data.Category});
+                data1.push({States:data.States,year:parseInt(2012),num:parseInt(data[2012]),Category:data.Category});
+                data1.push({States:data.States,year:parseInt(2013),num:parseInt(data[2013]),Category:data.Category});
+                data1.push({States:data.States,year:parseInt(2014),num:parseInt(data[2014]),Category:data.Category});
+                data1.push({States:data.States,year:parseInt(2015),num:parseInt(data[2015]),Category:data.Category});
+            }).then(function(data){
+
+                for (var i = 0; i < data1.length; i++) {
+                    num.push(parseInt(data1[i].num))
+                };
+                
+
+               
+//分类
+                for (var i = 0; i < data1.length; i++) {
+                    if(data1[i].Category=="0 to 9"){
+                        category1.push(data1[i])
+                    };
+                    if(data1[i].Category=="10 to 99"){
+                        category2.push(data1[i])
+                    };
+                    if(data1[i].Category=="100 to 499"){
+                        category3.push(data1[i])
+                    };
+                    if(data1[i].Category=="500 or above"){
+                        category4.push(data1[i])
+                    };                    
+                };
+
+                var a =d3.map(category1,d=>d.States).keys();
+
+                initialize()                
+
+                //add select.
+                var select = d3.select('body').append('select').attr('class','select').style("left","465px").style("top","170px").style("position","absolute").on('change',onchange);
+                var options = select.selectAll('option').data(Category).enter().append('option').attr("font-size", "35px").text(d=>d);
+                
+
+
+                function onchange() {
+                    //selectValue = "0 to 9";
+                    var selectValue = d3.select('select').property('value');
+
+                    if (selectValue=="0 to 9"){
+                        var tmp=category1;
+                        var x_value =d3.map(tmp,d=>d.States).keys();
+                        var y_value =d3.map(tmp,d=>d.year).keys();
+                        var num_value =d3.map(tmp,d=>parseInt(d.num,10)).keys();
+                    }
+                    if (selectValue=='10 to 99'){
+                        var tmp=category2;
+                        var x_value =d3.map(tmp,d=>d.States).keys();
+                        var y_value =d3.map(tmp,d=>d.year).keys();
+                        var num_value =d3.map(tmp,d=>parseInt(d.num,10)).keys();
+                    }                  
+                    if (selectValue=='100 to 499'){
+                        var tmp=category3;
+                        var x_value =d3.map(tmp,d=>d.States).keys();
+                        var y_value =d3.map(tmp,d=>d.year).keys();
+                        var num_value =d3.map(tmp,d=>parseInt(d.num,10)).keys();
+                    }    
+                    if (selectValue=='500 or above'){
+                        var tmp=category4;
+                        var x_value =d3.map(tmp,d=>d.States).keys();
+                        var y_value =d3.map(tmp,d=>d.year).keys(); 
+                        var num_value =d3.map(tmp,d=>parseInt(d.num,10)).keys();
+
+                    }
+                    // Build X scales and axis:
+                    var num=[];
+                    for (var i = 0; i < num_value.length; i++){
+                        num.push(parseInt(num_value[i]));
+                    };
+                    
+                    d3.select("svg").remove();
+                    
+                    var svg = d3.select("body").append("svg").attr("height",height).attr("width",width);
+                    var x = d3.scaleBand()
+                      .range([ padding.left, width-padding.right ])
+                      .domain(x_value)
+                      .padding(0.01)
+                      
+                    // Build Y scales and axis:
+                    var y = d3.scaleBand()
+                      .range([ height-padding.top, padding.bottom ])
+                      .domain(y_value)
+                      .padding(0.01);
+
+
+                var xAxis=d3.axisBottom(x).scale(x);
+
+                var gX=svg.append("g").attr("class", "axis").attr("transform","translate(0,"+(height - padding.bottom+10)+")");
+                
+                gX.call(xAxis).attr("font-size", "25px")
+                .selectAll("text")
+                .attr("y", 15)
+                .attr("x", 9)
+                .attr("dy", ".35em")
+                //旋转x轴label
+                .attr("transform", "rotate(30)")
+                .style("text-anchor", "start");
+
+                var yAxis=d3.axisLeft(y).scale(y);
+
+                var gY=svg.append("g").attr("class", "axis").attr("transform","translate("+(padding.left-10)+",0)");
+
+                gY.call(yAxis).attr("font-size", "25px");
+
+                    // Build color scale 
+       /*             var myColor = d3.scaleLinear()
+                      .range(["white", "#69b3a2"])
+                      .domain([d3.min(num_value),d3.max(num_value)]);*/
+
+       /*             var myColor = d3.scaleLinear()
+                                        .domain([d3.min(num_value),d3.max(num_value)])
+                                        .range(['#ffffcc', '#ffeda0', '#fed976','#feb24c','#fd8d3c','#fc4e2a','#e31a1c','#bd0026','#800026'])   */
+
+                console.log(d3.min(num_value))
+                console.log(d3.min(num))
+                console.log(num_value)
+                console.log(num)
+                console.log(tmp[0].num)
+                console.log('llllllllllll')
+                var myColor = d3.scaleQuantile()
+        							  .domain([d3.min(num), d3.max(num)])
+        							  .range(['#ffffcc', '#ffeda0', '#fed976','#feb24c','#fd8d3c','#fc4e2a','#e31a1c','#bd0026','#800026']);
+
+                svg .selectAll()
+                    .data(tmp, function(d) {return d.States+':'+d.year;})
+                    .enter()
+                    .append("rect")
+                    .attr("x", function(d) { return x(d.States) })
+                    .attr("y", function(d) { return y(d.year) })
+                    .attr("width", x.bandwidth() )
+                    .attr("height", y.bandwidth() )
+                    .style("fill", function(d) { return myColor(d.num)} )
+                    .on("mouseover", handleMouseOver)
+                    .on("mouseleave",handleMouseOut)  
+
+                    svg.append("text").attr("x", width/2-500).attr("y", padding.top-70).text("Visualizing Earthquake Counts by States 2010-2015(M3+)").attr("font-size", "40px"); 
+                    svg.append("text").attr("x", width/2-400).attr("y", padding.top-20).text("Range of").attr("font-size", "25px");                    
+
+
+					//add legend
+				var colors=['#ffffcc', '#ffeda0', '#fed976','#feb24c','#fd8d3c','#fc4e2a','#e31a1c','#bd0026','#800026'];
+
+				var delta=Math.round((d3.max(num)-d3.min(num))/8);
+				
+				var legend_data=[d3.min(num),d3.min(num)+delta,d3.min(num)+delta*2,d3.min(num)+delta*3,d3.min(num)+delta*4,d3.min(num)+delta*5,d3.min(num)+delta*6,d3.min(num)+delta*7,d3.max(num)];
+
+
+				cellSize=80;
+
+				var legend = svg.selectAll("legend").data(colors)
+								.enter().append("g").attr("class", "legend");
+
+		        legend.append("rect")
+		        .attr("x", function(d, i) { return padding.left+cellSize * i; })
+		        .attr("y", height-40)
+		        .attr("width", cellSize)
+		        .attr("height", cellSize/2)
+		        .attr("fill", function(d, i) { return colors[i]; });
+		        legend.append("text")
+		        .attr("class", "mono")
+		        .text((d,i)=>legend_data[i]+"")
+		        .attr("x", function(d, i) { return padding.left+cellSize * i+20; })
+		        .attr("y", height-cellSize/1.5+10).attr("font-size", "25px");
+
+				svg.append("text")
+				    .attr("class", "caption")
+				    .attr("x", padding.left)
+				    .attr("y", height-80)
+				    .attr("fill", "#000")
+				    .text("Count").attr("font-size", "30px");
+
+
+          function handleMouseOver(d) {  
+          	svg.append("text").attr("id","lalal"+d.year+""+"-"+d.num+"").attr("x",width/2).attr("y",padding.top).text(d.States+"  "+d.year+":"+d.num);         
+          }
+
+           function handleMouseOut(d) {
+           	var textid = "lalal"+d.year+""+"-"+d.num+"";
+           	console.log(d3.select("#"+textid)._groups[0])
+            d3.selectAll("#"+textid).remove();
+          }
+}
+//initialize
+                function initialize() {
+                    var selectValue = "0 to 9";
+                   
+                    var tmp=category1;
+                    var x_value =d3.map(tmp,d=>d.States).keys();
+                    var y_value =d3.map(tmp,d=>d.year).keys();
+                    var num_value =d3.map(tmp,d=>parseInt(d.num,10)).keys();
+                    
+                    // Build X scales and axis:
+                    var num=[];
+                    for (var i = 0; i < num_value.length; i++){
+                        num.push(parseInt(num_value[i]));
+                    };
+                    
+                    d3.select("svg").remove();
+                    
+                    var svg = d3.select("body").append("svg").attr("height",height).attr("width",width);
+                    var x = d3.scaleBand()
+                      .range([ padding.left, width-padding.right ])
+                      .domain(x_value)
+                      .padding(0.01)
+                      
+                    // Build Y scales and axis:
+                    var y = d3.scaleBand()
+                      .range([ height-padding.top, padding.bottom ])
+                      .domain(y_value)
+                      .padding(0.01);
+
+
+                var xAxis=d3.axisBottom(x).scale(x);
+
+                var gX=svg.append("g").attr("class", "axis").attr("transform","translate(0,"+(height - padding.bottom+10)+")");
+                
+                gX.call(xAxis).attr("font-size", "25px")
+                .selectAll("text")
+                .attr("y", 15)
+                .attr("x", 9)
+                .attr("dy", ".35em")
+                //旋转x轴label
+                .attr("transform", "rotate(30)")
+                .style("text-anchor", "start");
+
+                var yAxis=d3.axisLeft(y).scale(y);
+
+                var gY=svg.append("g").attr("class", "axis").attr("transform","translate("+(padding.left-10)+",0)");
+
+                gY.call(yAxis).attr("font-size", "25px");
+
+                    // Build color scale 
+       /*             var myColor = d3.scaleLinear()
+                      .range(["white", "#69b3a2"])
+                      .domain([d3.min(num_value),d3.max(num_value)]);*/
+
+       /*             var myColor = d3.scaleLinear()
+                                        .domain([d3.min(num_value),d3.max(num_value)])
+                                        .range(['#ffffcc', '#ffeda0', '#fed976','#feb24c','#fd8d3c','#fc4e2a','#e31a1c','#bd0026','#800026'])   */
+
+                var myColor = d3.scaleQuantile()
+        							  .domain([d3.min(num),d3.max(num)])
+        							  .range(['#ffffcc', '#ffeda0', '#fed976','#feb24c','#fd8d3c','#fc4e2a','#e31a1c','#bd0026','#800026']);
+
+                svg .selectAll()
+                    .data(tmp, function(d) {return d.States+':'+d.year;})
+                    .enter()
+                    .append("rect")
+                    .attr("x", function(d) { return x(d.States) })
+                    .attr("y", function(d) { return y(d.year) })
+                    .attr("width", x.bandwidth() )
+                    .attr("height", y.bandwidth() )
+                    .style("fill", function(d) { return myColor(d.num)} )
+                    .on("mouseover", handleMouseOver)
+                    .on("mouseleave",handleMouseOut)  
+
+                    svg.append("text").attr("x", width/2-500).attr("y", padding.top-70).text("Visualizing Earthquake Counts by States 2010-2015(M3+)").attr("font-size", "40px"); 
+                    svg.append("text").attr("x", width/2-400).attr("y", padding.top-20).text("Range of").attr("font-size", "25px");                    
+
+
+					//add legend
+				var colors=['#ffffcc', '#ffeda0', '#fed976','#feb24c','#fd8d3c','#fc4e2a','#e31a1c','#bd0026','#800026'];
+
+				var delta=Math.round((d3.max(num)-d3.min(num))/8);
+				
+				var legend_data=[d3.min(num),d3.min(num)+delta,d3.min(num)+delta*2,d3.min(num)+delta*3,d3.min(num)+delta*4,d3.min(num)+delta*5,d3.min(num)+delta*6,d3.min(num)+delta*7,d3.max(num)];
+
+
+				cellSize=80;
+
+				var legend = svg.selectAll("legend").data(colors)
+								.enter().append("g").attr("class", "legend");
+
+		        legend.append("rect")
+		        .attr("x", function(d, i) { return padding.left+cellSize * i; })
+		        .attr("y", height-40)
+		        .attr("width", cellSize)
+		        .attr("height", cellSize/2)
+		        .attr("fill", function(d, i) { return colors[i]; });
+		        legend.append("text")
+		        .attr("class", "mono")
+		        .text((d,i)=>legend_data[i]+"")
+		        .attr("x", function(d, i) { return padding.left+cellSize * i+20; })
+		        .attr("y", height-cellSize/1.5+10).attr("font-size", "25px");
+
+				svg.append("text")
+				    .attr("class", "caption")
+				    .attr("x", padding.left)
+				    .attr("y", height-80)
+				    .attr("fill", "#000")
+				    .text("Count").attr("font-size", "30px");
+
+
+          function handleMouseOver(d) {  
+          	svg.append("text").attr("id","lalal"+d.year+""+"-"+d.num+"").attr("x",width/2).attr("y",padding.top).text(d.States+"  "+d.year+":"+d.num);         
+          }
+
+           function handleMouseOut(d) {
+           	var textid = "lalal"+d.year+""+"-"+d.num+"";
+           	console.log(d3.select("#"+textid)._groups[0])
+            d3.selectAll("#"+textid).remove();
+          }
+}
+//end 
+})       
+
+
+                
+			
+		</script>
+	
+</body>
+</html>
+
+

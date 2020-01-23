@@ -1,0 +1,25 @@
+1. Ease to develop for developers [40 words]
+	D3: Worst! The data type and grammar is a mess!
+	Tableau: Best. You can start with basic knowledge about table.
+	python: Medium. Start with learning Matplotlib. The datatype in python is clear and it has strong library to visualize.
+
+2. Ease to maintain the visualization for developers (e.g., difficulty of the maintenance of the product as the requirements change, the data changes, the hosting platform changes, etc.) [40 words]
+	D3: Worst! Even the grammar changed when new version comes out!
+	Tableau: Medium. New version can open old one and can also save as the old one.
+	python: Medium. New version usually brings new functions instead of changing the gramma.
+
+3. Usability of visualization developed for end users [40 words]
+	D3: Best. Save as html and everyone can enjoy and interact with it.
+	Tableau: Worst. You can enjoy the picture but having expensive Tableau will be better.
+	Python: Medium. You can enjoy the picture but having free python will be better.
+
+4. Scalability of visualization to ¡°large¡± datasets [40 words]
+	D3: Medium. SVG DOM elements eat too much of RAM (according to the literature).
+	Python: Medium. Run in one kernel, speed is not so ideal.
+	Tableau: Born for big data!
+
+5. System requirements to run the visualization (e.g., browsers, OS, software licensing) for end users [40 words]
+	D3: You need a browser and set its ¡°privacy.file_unique_origin¡± or have a local sever.
+	Python: you need to install python and import library like Matplotlib.
+	Tableau: You need to pay a lot of money for Tableau : )
+

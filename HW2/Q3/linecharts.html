@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+    <meta charset="utf-8">
+    <title>Worldwide Earthquake stats 2000-2015</title>
+    <script type="text/javascript" src="../lib/d3.v5.min.js"></script>
+    <style type="text/css">
+    @media print {
+    .pagebreak {
+        clear: both;
+        page-break-after: always;
+		    }
+		}
+
+    
+    </style>
+
+  </head>
+  <body>
+    <script type="text/javascript">
+
+	var margin = {top: 50, right: 100, bottom: 100, left: 100},
+	    width = 1800 - margin.left - margin.right,
+	    height = 800 - margin.top - margin.bottom;
+
+
+	var svg1 = d3.select("body")
+	  			 .append("svg")
+	    		 .attr("width", width + margin.left + margin.right)
+	    		 .attr("height", height + margin.top + margin.bottom)
+	  			 .append("g")
+	    		 .attr("transform","translate(" + margin.left + "," + margin.top + ")");
+
+
+    var myColor = {'5_5.9': '#FFC300', '6_6.9': '#FF5733', '7_7.9': '#C70039', '8.0+': '#900C3F'};
+    var magnitudes = Object.keys(myColor);
+
+
+
+	d3.csv("earthquakes.csv").then(function(data){
+
+    var dataReady = magnitudes.map( function(grpName) { 
+      return {
+        name: grpName,
+        values: data.map(function(d) { 
+        	//if (d[grpName]==0){return {year: d3.timeParse("%Y")(d.year), value: +d[grpName]+1};}
+        	//else {return {year: d3.timeParse("%Y")(d.year), value: +d[grpName]};}
+        return {year: d3.timeParse("%Y")(d.year), value: +d[grpName],weight: +d["Estimated Deaths"]};       
+        })
+      }
+    });
+
+
+/*
+    // A color scale: one color for each group
+    var myColor = d3.scaleOrdinal()
+      .domain(allGroup)
+      .range(d3.schemeSet2); */
+
+    // Add X axis 
+    var x = d3.scaleTime()
+      		  .domain([new Date("2000"),new Date("2015")])
+      		  .range([ margin.left, width-margin.right ]);
+    svg1.append("g")
+      	.attr("transform", "translate(0," + (height-margin.bottom) + ")")
+      	.call(d3.axisBottom(x)).attr("font-size", "30px");
+
+    // Add Y axis
+    var y = d3.scaleLinear()
+      		  .domain( [0,2300])
+      		  .range([ height-margin.bottom, margin.top ]);
+    svg1.append("g")
+    	.attr("transform","translate("+margin.left+",0)")
+      	.call(d3.axisLeft(y)).attr("font-size", "30px");
+
+
+/*
+    // Add Ylog Axis
+    var y = d3.scaleLog()
+      .domain( [1,2300])
+      .range([ height, 0 ])
+      .base(10);
+    svg.append("g")
+      .call(d3.axisLeft(y));    
+*/
+/*
+    // Add Square Root Axis
+    var y = d3.scaleSqrt()
+      .domain( [0,2300])
+      .range([ height, 0 ]);
+    svg.append("g")
+      .call(d3.axisLeft(y));   */
+
+
+
+    // Add the lines
+    // console.log('llllllllllllllllllll')
+    // console.log(dataReady)
+    // console.log(dataReady[0].values)
+    // console.log(dataReady[0].values[0].year)
+    // console.log(dataReady[0].values[0].value)
+
+    var line = d3.line()
+      			 .x(function(d) { return x(+d.year) })
+      			 .y(function(d) { return y(+d.value) }).curve(d3.curveMonotoneX)
+    
+    svg1.selectAll("myLines")
+      	.data(dataReady)
+      	.enter()
+      	.append("path")
+        .attr("d", function(d){ return line(d.values) } )
+        .attr("stroke", function(d){ return myColor[d.name] })
+        .style("stroke-width", 4)
+        .style("fill", "none")
+        
+/*    // Add the points
+    svg
+      // First we need to enter in a group
+      .selectAll("myDots")
+      .data(dataReady)
+      .enter()
+        .append('g')
+        .style("fill", function(d){ return myColor[d.name]})
+      // Second we need to enter in the 'values' part of this group
+      .selectAll("myPoints")
+      .data(function(d){ return d.values })
+      .enter()
+      .append("circle")
+        .attr("cx", function(d) { return x(d.year) } )
+        .attr("cy", function(d) { return y(d.value) } )
+        .attr("r", 5)
+        .attr("stroke", "white")   */
+/*
+    // Add a legend at the end of each line
+    svg
+      .selectAll("myLabels")
+      .data(dataReady)
+      .enter()
+        .append('g')
+        .append("text")
+          .datum(function(d) { return {name: d.name, value: d.values[d.values.length - 1]}; }) // keep only the last value of each time series
+          .attr("transform", function(d) { return "translate(" + x(d.value.year) + "," + y(d.value.value) + ")"; }) // Put the text at the position of the last point
+          .attr("x", 12) // shift the text a bit more right
+          .text(function(d) { return d.name; })
+          .style("fill", function(d){ return myColor[d.name] })
+          .style("font-size", 15)
+          */
+
+
+          var size = 40
+          svg1.selectAll("mydots")
+            .data(magnitudes)
+            .enter()
+            .append("rect")
+            .attr("x", 1500)
+            .attr("y", function(d,i){ return 30 + i*(size+5)}) // 100 is where the first dot appears. 25 is the distance between dots
+              .attr("width", size)
+              .attr("height", size)
+              .style("fill", function(d){ return myColor[d]})
+
+          // Add one dot in the legend for each name.
+          svg1.selectAll("mylabels")
+            .data(magnitudes)
+            .enter()
+            .append("text")
+            .attr("x", 1500 + size*1.2)
+            .attr("y", function(d,i){ return 30 + i*(size+5) + (size/2)}) // 100 is where the first dot appears. 25 is the distance between dots
+            .style("fill", "black")
+            .text(function(d){ return d})
+            .attr("text-anchor", "left")
+            .attr("font-size", "25px")
+            .style("alignment-baseline", "middle")
+
+          //表名
+          svg1.append("text").attr("x", width/2-300).attr("y", 30).text("Worldwide Earthquake stats 2000-2015").attr("font-size", "50px");  
+          svg1.append("text").attr("x", width/2).attr("y", height).text("Year").attr("font-size", "30px");  
+          svg1.append("text").attr("x", -height/2-margin.top).attr("y", -30).text("Num of Earthquakes").attr("font-size", "30px").attr("transform","rotate(270)"); 
+})
+
+
+    </script>
+    <div class="pagebreak"> </div>
+
+    <script type="text/javascript">
+
+	var margin = {top: 50, right: 100, bottom: 100, left: 100},
+	    width = 1800 - margin.left - margin.right,
+	    height = 800 - margin.top - margin.bottom;
+
+
+	var svg2 = d3.select("body")
+	  .append("svg")
+	    .attr("width", width + margin.left + margin.right)
+	    .attr("height", height + margin.top + margin.bottom)
+	  .append("g")
+	    .attr("transform",
+	          "translate(" + margin.left + "," + margin.top + ")");
+
+
+    var myColor = {'5_5.9': '#FFC300', '6_6.9': '#FF5733', '7_7.9': '#C70039', '8.0+': '#900C3F'};
+    var magnitudes = Object.keys(myColor);
+
+
+	d3.csv("earthquakes.csv").then(function(data){
+
+    var dataReady = magnitudes.map( function(grpName) { 
+      return {
+        name: grpName,
+        values: data.map(function(d) { 
+          //if (d[grpName]==0){return {year: d3.timeParse("%Y")(d.year), value: +d[grpName]+1};}
+          //else {return {year: d3.timeParse("%Y")(d.year), value: +d[grpName]};}
+        return {year: d3.timeParse("%Y")(d.year), value: +d[grpName],weight: +d["Estimated Deaths"]};       
+        })
+      }
+    });
+
+
+
+
+/*
+    // A color scale: one color for each group
+    var myColor = d3.scaleOrdinal()
+      .domain(allGroup)
+      .range(d3.schemeSet2); */
+
+    // Add X axis 
+    var x = d3.scaleTime()
+      		.domain([new Date("2000"),new Date("2015")])
+      		.range([ margin.left, width-margin.right ]);
+    svg2.append("g")
+      	.attr("transform", "translate(0," + (height-margin.bottom) + ")")
+      	.call(d3.axisBottom(x)).attr("font-size", "30px");
+
+    // Add Y axis
+    var y = d3.scaleLinear()
+      		  .domain( [0,2300])
+      		  .range([ height-margin.bottom, margin.top ]);
+
+    svg2.append("g")
+    	.attr("transform","translate("+margin.left+",0)")
+      	.call(d3.axisLeft(y)).attr("font-size", "30px");
+        
+	//add r axis
+    var r = d3.scaleLog()
+          .domain([100,300000])
+          .range([1,15]);
+
+/*
+    // Add Ylog Axis
+    var y = d3.scaleLog()
+      .domain( [1,2300])
+      .range([ height, 0 ])
+      .base(10);
+    svg.append("g")
+      .call(d3.axisLeft(y));    
+*/
+/*
+    // Add Square Root Axis
+    var y = d3.scaleSqrt()
+      .domain( [0,2300])
+      .range([ height, 0 ]);
+    svg.append("g")
+      .call(d3.axisLeft(y));   */
+
+
+
+    // Add the lines
+    var line = d3.line()
+      			 .x(function(d) { return x(+d.year) })
+      			 .y(function(d) { return y(+d.value) }).curve(d3.curveMonotoneX)
+
+    
+    svg2.selectAll("myLines")
+      	.data(dataReady)
+      	.enter()
+      	.append("path")
+        .attr("d", function(d){ return line(d.values) } )
+        .attr("stroke", function(d){ return myColor[d.name] })
+        .style("stroke-width", 4)
+        .style("fill", "none")
+        
+    // Add the points
+    svg2.selectAll("myDots")
+      	.data(dataReady)
+      	.enter()
+        .append('g')
+        .style("fill", function(d){ return myColor[d.name]})
+      	.selectAll("myPoints")
+      	.data(function(d){ return d.values })
+      	.enter()
+      	.append("circle")
+        .attr("cx", function(d) { return x(d.year) } )
+        .attr("cy", function(d) { return y(d.value) } )
+        .attr("r", function(d) { return r(d.weight) + 3})
+        .attr("stroke", "white")   
+/*
+    // Add a legend at the end of each line
+    svg
+      .selectAll("myLabels")
+      .data(dataReady)
+      .enter()
+        .append('g')
+        .append("text")
+          .datum(function(d) { return {name: d.name, value: d.values[d.values.length - 1]}; }) // keep only the last value of each time series
+          .attr("transform", function(d) { return "translate(" + x(d.value.year) + "," + y(d.value.value) + ")"; }) // Put the text at the position of the last point
+          .attr("x", 12) // shift the text a bit more right
+          .text(function(d) { return d.name; })
+          .style("fill", function(d){ return myColor[d.name] })
+          .style("font-size", 15)
+          */
+
+
+          var size = 40
+          svg2.selectAll("mydots")
+              .data(magnitudes)
+              .enter()
+              .append("rect")
+              .attr("x", 1500)
+              .attr("y", function(d,i){ return 30 + i*(size+5)}) // 100 is where the first dot appears. 25 is the distance between dots
+              .attr("width", size)
+              .attr("height", size)
+              .style("fill", function(d){ return myColor[d]})
+
+          // Add one dot in the legend for each name.
+          svg2 . selectAll("mylabels")
+            	.data(magnitudes)
+            	.enter()
+            	.append("text")
+              	.attr("x", 1500 + size*1.2)
+              	.attr("y", function(d,i){ return 30 + i*(size+5) + (size/2)})
+              	.style("fill", "black")
+              	.text(function(d){ return d})
+              	.attr("text-anchor", "left")
+              	.attr("font-size", "25px")
+              	.style("alignment-baseline", "middle")
+
+          //表名
+          svg2.append("text").attr("x", width/2-400).attr("y", 10).text("Worldwide Earthquake stats 2000-2015 with symbols").attr("font-size", "50px");  
+          svg2.append("text").attr("x", width/2).attr("y", height).text("Year").attr("font-size", "30px");  
+          svg2.append("text").attr("x", -height/2-margin.top).attr("y", -30).text("Num of Earthquakes").attr("font-size", "30px").attr("transform","rotate(270)"); 
+})
+
+
+    </script>
+
+    <div class="pagebreak"> </div>
+
+    <script type="text/javascript">
+
+
+
+
+	var margin = {top: 50, right: 100, bottom: 100, left: 100},
+	    width = 1800 - margin.left - margin.right,
+	    height = 800 - margin.top - margin.bottom;
+
+
+	var svg3 = d3.select("body")
+	  			 .append("svg")
+	    		 .attr("width", width + margin.left + margin.right)
+	    		 .attr("height", height + margin.top + margin.bottom)
+	  			 .append("g")
+	    		 .attr("transform","translate(" + margin.left + "," + margin.top + ")");
+
+
+    var myColor = {'5_5.9': '#FFC300', '6_6.9': '#FF5733', '7_7.9': '#C70039', '8.0+': '#900C3F'};
+    var magnitudes = Object.keys(myColor);
+
+
+	d3.csv("earthquakes.csv").then(function(data){
+
+    var dataReady = magnitudes.map( function(grpName) { 
+      return {
+        name: grpName,
+        values: data.map(function(d) { 
+          //if (d[grpName]==0){return {year: d3.timeParse("%Y")(d.year), value: +d[grpName]+1,weight: +d["Estimated Deaths"]};}
+          //else {return {year: d3.timeParse("%Y")(d.year), value: +d[grpName],weight: +d["Estimated Deaths"]};}
+        return {year: d3.timeParse("%Y")(d.year), value: +d[grpName],weight: +d["Estimated Deaths"]};       
+        })
+      }
+    });
+
+
+
+
+/*
+    // A color scale: one color for each group
+    var myColor = d3.scaleOrdinal()
+      .domain(allGroup)
+      .range(d3.schemeSet2); */
+
+    // Add X axis 
+    var x = d3.scaleTime()
+      		  .domain([new Date("2000"),new Date("2015")])
+      		  .range([ margin.left, width-margin.right ]);
+
+    svg3.append("g")
+      	.attr("transform", "translate(0," + (height-margin.bottom) + ")")
+      	.call(d3.axisBottom(x)).attr("font-size", "30px");
+/*
+    // Add Y axis
+    var y = d3.scaleLinear()
+      .domain( [0,2300])
+      .range([ height-margin.bottom, margin.top ]);
+    svg3.append("g")
+    .attr("transform","translate("+margin.left+",0)")
+      .call(d3.axisLeft(y)).attr("font-size", "30px");
+*/
+
+        
+		//add r axis
+        var r = d3.scaleLog()
+          .domain([100,300000])
+          .range([1,15]);
+
+/*
+    // Add Ylog Axis
+    var y = d3.scaleLog()
+      .domain( [1,2300])
+      .range([ height-margin.bottom, margin.top ])
+      .base(10);
+    svg.append("g")
+      .attr("transform","translate("+margin.left+",0)")
+      .call(d3.axisLeft(y)).attr("font-size", "30px");    
+*/
+
+    // Add Square Root Axis
+    var y = d3.scaleSqrt()
+      		  .domain( [0,2300])
+      		  .range([ height-margin.bottom, margin.top ]);
+
+    svg3.append("g")
+      	.attr("transform","translate("+margin.left+",0)")
+      	.call(d3.axisLeft(y)).attr("font-size", "30px");   
+
+
+
+    // Add the lines
+    var line = d3.line()
+      			 .x(function(d) { return x(+d.year) })
+      			 .y(function(d) { return y(+d.value) }).curve(d3.curveMonotoneX)
+
+    svg3.selectAll("myLines")
+      	.data(dataReady)
+      	.enter()
+      	.append("path")
+        .attr("d", function(d){ return line(d.values) } )
+        .attr("stroke", function(d){ return myColor[d.name] })
+        .style("stroke-width", 4)
+        .style("fill", "none")
+        
+    // Add the points
+    svg3.selectAll("myDots")
+      	.data(dataReady)
+      	.enter()
+        .append('g')
+        .style("fill", function(d){ return myColor[d.name]})
+      	.selectAll("myPoints")
+      	.data(function(d){ return d.values })
+      	.enter()
+      	.append("circle")
+        .attr("cx", function(d) { return x(d.year) } )
+        .attr("cy", function(d) { return y(d.value) } )
+        .attr("r", function(d) { return r(d.weight) + 3})
+        .attr("stroke", "white")   
+/*
+    // Add a legend at the end of each line
+    svg
+      .selectAll("myLabels")
+      .data(dataReady)
+      .enter()
+        .append('g')
+        .append("text")
+          .datum(function(d) { return {name: d.name, value: d.values[d.values.length - 1]}; }) // keep only the last value of each time series
+          .attr("transform", function(d) { return "translate(" + x(d.value.year) + "," + y(d.value.value) + ")"; }) // Put the text at the position of the last point
+          .attr("x", 12) // shift the text a bit more right
+          .text(function(d) { return d.name; })
+          .style("fill", function(d){ return myColor[d.name] })
+          .style("font-size", 15)
+          */
+
+
+          var size = 40
+          svg3.selectAll("mydots")
+              .data(magnitudes)
+              .enter()
+              .append("rect")
+              .attr("x", 1550)
+              .attr("y", function(d,i){ return 30 + i*(size+5)}) // 100 is where the first dot appears. 25 is the distance between dots
+              .attr("width", size)
+              .attr("height", size)
+              .style("fill", function(d){ return myColor[d]})
+
+          // Add one dot in the legend for each name.
+          svg3.selectAll("mylabels")
+              .data(magnitudes)
+              .enter()
+              .append("text")
+              .attr("x", 1550 + size*1.2)
+              .attr("y", function(d,i){ return 30 + i*(size+5) + (size/2)}) // 100 is where the first dot appears. 25 is the distance between dots
+              .style("fill", "black")
+              .text(function(d){ return d})
+              .attr("text-anchor", "left")
+              .attr("font-size", "25px")
+              .style("alignment-baseline", "middle")
+
+          //表名
+          svg3.append("text").attr("x", width/2-400).attr("y", 10).text("Worldwide Earthquake stats 2000-2015 square root scale").attr("font-size", "50px");  
+          svg3.append("text").attr("x", width/2).attr("y", height).text("Year").attr("font-size", "30px");  
+          svg3.append("text").attr("x", -height/2-margin.top).attr("y", -30).text("Num of Earthquakes").attr("font-size", "30px").attr("transform","rotate(270)"); 
+})
+
+
+    </script>
+    
+    <div class="pagebreak"> </div>
+
+
+
+    <script type="text/javascript">
+
+
+	var margin = {top: 50, right: 100, bottom: 100, left: 100},
+	    width = 1800 - margin.left - margin.right,
+	    height = 800 - margin.top - margin.bottom;
+
+
+	var svg4 = d3.select("body")
+	  .append("svg")
+	    .attr("width", width + margin.left + margin.right)
+	    .attr("height", height + margin.top + margin.bottom)
+	  .append("g")
+	    .attr("transform",
+	          "translate(" + margin.left + "," + margin.top + ")");
+
+
+    var myColor = {'5_5.9': '#FFC300', '6_6.9': '#FF5733', '7_7.9': '#C70039', '8.0+': '#900C3F'};
+    var magnitudes = Object.keys(myColor);
+
+
+	d3.csv("earthquakes.csv").then(function(data){
+
+    var dataReady = magnitudes.map( function(grpName) { 
+      return {
+        name: grpName,
+        values: data.map(function(d) { 
+          if (d[grpName]==0){return {year: d3.timeParse("%Y")(d.year), value: +d[grpName]+1,weight: +d["Estimated Deaths"]};}
+          else {return {year: d3.timeParse("%Y")(d.year), value: +d[grpName],weight: +d["Estimated Deaths"]};}
+        //return {year: d3.timeParse("%Y")(d.year), value: +d[grpName],weight: +d["Estimated Deaths"]};       
+        })
+      }
+    });
+
+
+
+/*
+    // A color scale: one color for each group
+    var myColor = d3.scaleOrdinal()
+      .domain(allGroup)
+      .range(d3.schemeSet2); */
+
+    // Add X axis
+    var x = d3.scaleTime()
+      		  .domain([new Date("2000"),new Date("2015")])
+      		  .range([ margin.left, width-margin.right ]);
+
+    svg4.append("g")
+        .attr("transform", "translate(0," + (height-margin.bottom) + ")")
+        .call(d3.axisBottom(x)).attr("font-size", "30px");
+/*
+    // Add Y axis
+    var y = d3.scaleLinear()
+      .domain( [0,2300])
+      .range([ height-margin.bottom, margin.top ]);
+    svg3.append("g")
+    .attr("transform","translate("+margin.left+",0)")
+      .call(d3.axisLeft(y)).attr("font-size", "30px");
+*/
+
+        
+	//add r axis
+    var r = d3.scaleLog()
+          	  .domain([100,300000])
+              .range([1,15]);
+
+
+    // Add Ylog Axis
+    var y = d3.scaleLog()
+      		  .domain( [1,2300])
+      		  .range([ height-margin.bottom, margin.top ])
+      		  .base(10);
+
+    svg4.append("g")
+      	.attr("transform","translate("+margin.left+",0)")
+      	.call(d3.axisLeft(y)).attr("font-size", "30px");    
+
+/*
+    // Add Square Root Axis
+    var y = d3.scaleSqrt()
+      .domain( [0,2300])
+      .range([ height-margin.bottom, margin.top ]);
+    svg3.append("g")
+      .attr("transform","translate("+margin.left+",0)")
+      .call(d3.axisLeft(y)).attr("font-size", "30px");   */
+
+
+
+    // Add the lines
+    var line = d3.line()
+      			 .x(function(d) { return x(+d.year) })
+      			 .y(function(d) { return y(+d.value) }).curve(d3.curveMonotoneX)
+    
+    svg4.selectAll("myLines")
+        .data(dataReady)
+        .enter()
+        .append("path")
+        .attr("d", function(d){ return line(d.values) } )
+        .attr("stroke", function(d){ return myColor[d.name] })
+        .style("stroke-width", 4)
+        .style("fill", "none")
+        
+    // Add the points
+    svg4.selectAll("myDots")
+        .data(dataReady)
+        .enter()
+        .append('g')
+        .style("fill", function(d){ return myColor[d.name]})
+        .selectAll("myPoints")
+        .data(function(d){ return d.values })
+        .enter()
+        .append("circle")
+        .attr("cx", function(d) { return x(d.year) } )
+        .attr("cy", function(d) { return y(d.value) } )
+        .attr("r", function(d) { return r(d.weight) + 3})
+        .attr("stroke", "white")   
+/*
+    // Add a legend at the end of each line
+    svg
+      .selectAll("myLabels")
+      .data(dataReady)
+      .enter()
+        .append('g')
+        .append("text")
+          .datum(function(d) { return {name: d.name, value: d.values[d.values.length - 1]}; }) // keep only the last value of each time series
+          .attr("transform", function(d) { return "translate(" + x(d.value.year) + "," + y(d.value.value) + ")"; }) // Put the text at the position of the last point
+          .attr("x", 12) // shift the text a bit more right
+          .text(function(d) { return d.name; })
+          .style("fill", function(d){ return myColor[d.name] })
+          .style("font-size", 15)
+          */
+
+
+          var size = 40
+          svg4.selectAll("mydots")
+              .data(magnitudes)
+              .enter()
+              .append("rect")
+              .attr("x", 1550)
+              .attr("y", function(d,i){ return 30 + i*(size+5)}) // 100 is where the first dot appears. 25 is the distance between dots
+              .attr("width", size)
+              .attr("height", size)
+              .style("fill", function(d){ return myColor[d]})
+
+          // Add one dot in the legend for each name.
+          svg4.selectAll("mylabels")
+              .data(magnitudes)
+              .enter()
+              .append("text")
+              .attr("x", 1550 + size*1.2)
+              .attr("y", function(d,i){ return 30 + i*(size+5) + (size/2)}) 
+              .style("fill", "black")
+              .text(function(d){ return d})
+              .attr("text-anchor", "left")
+              .attr("font-size", "25px")
+              .style("alignment-baseline", "middle")
+
+          //表名
+          svg4.append("text").attr("x", width/2-400).attr("y", 10).text("Worldwide Earthquake stats 2000-2015 log scale").attr("font-size", "50px");  
+          svg4.append("text").attr("x", width/2).attr("y", height).text("Year").attr("font-size", "30px");  
+          svg4.append("text").attr("x", -height/2-margin.top).attr("y", -30).text("Num of Earthquakes").attr("font-size", "30px").attr("transform","rotate(270)"); 
+})
+
+
+    </script>
+  
+</body>
+</html>

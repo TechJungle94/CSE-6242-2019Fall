@@ -1,0 +1,1 @@
+When the scale of data is very different from each other, for example, 10 and 100000, it is better for us to use nonlinear scales in charts. Nonlinear scales can show every data clearly, otherwise, we may hardly see 10 in the charts. 

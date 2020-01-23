@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="utf-8">
+    <title>S_Y_E</title>
+    <script type="text/javascript" src="../lib/d3.v5.min.js"></script>
+    <style type="text/css">
+    
+    </style>
+
+  </head>
+  <body>
+    <script type="text/javascript">
+
+          var interval = 5;
+          var tmp=[];
+          
+          var padding = {top: 50, right: 100, bottom: 100, left: 100},
+              width = 1800,
+              height = 800;
+
+          var svg = d3.select("body")
+            .append("svg")
+              .attr("width", width)
+              .attr("height", height)
+              .append("g")
+              .attr("transform","translate(" + padding.left + "," + padding.top + ")");
+
+          svg.append("text").attr("x", width/2-300).attr("y", 30).text("US Earthquakes by Region 2010-2015").attr("font-size", "50px");  
+    
+          d3.csv("state-year-earthquakes.csv").then(function(data){
+
+              var data1 = d3.nest()
+                            .key(function(d) {return d.region})
+                            .key(function(d) {return d.year})          
+                            .rollup(function(leaves){
+                                        return{
+                                          states:leaves,
+                                          sum:d3.sum(leaves, function(d){return +d.count})
+                                        }
+                                }).entries(data);
+                
+
+        // console.log(data1)
+        // console.log(data1[0])
+        // console.log(data1[0].key)
+        // console.log(data1[0].values[0])
+        //console.log(data1[0].values[0].key)   //时间
+        // console.log(data1[0].values[0].value["states"])
+        // console.log(data1[0].values[0].value["states"][0]["state"])  //albama
+        //console.log(data1[0].values[0].value["sum"])  //71
+
+        //for not to hardcode
+
+        var year_minmax=[];
+        var sum_minmax=[];
+
+        for (var i = 0; i < 4; i++){
+          for (var j = 0; j < 6; j++){
+
+            year_minmax.push(data1[i].values[j].key)
+            sum_minmax.push(data1[i].values[j].value["sum"])
+
+          }
+        }
+
+        //console.log(d3.extent(year_minmax))
+        //console.log(d3.extent(sum_minmax))
+
+        var myColor = {'Midwest': "pink", 'Northeast': "purple", 'South': "green", 'West': "red"};
+
+        var regions = Object.keys(myColor);
+
+        var x = d3.scaleTime()
+                  .domain([new Date(d3.min(year_minmax)),new Date(d3.max(year_minmax))])
+                  .range([ padding.left, width-padding.right-50 ]);
+        
+        svg.append("g")
+          .attr("transform", "translate(0," + (height-padding.bottom) + ")")
+          .call(d3.axisBottom(x)).attr("font-size", "20px");
+
+
+        var y = d3.scaleLinear()
+                  .domain(d3.extent(sum_minmax))
+                  .range([ height-padding.bottom, padding.top ]);
+        
+        svg.append("g")
+           .attr("transform","translate("+padding.left+",0)")
+           .call(d3.axisLeft(y)).attr("font-size", "20px");
+
+
+        function handleMouseOver(d) {  
+            d3.select(this).attr('r','20');
+            //console.log(d3.select(this))
+            a=d3.select(this)._groups[0][0].__data__.Region;
+            b=parseInt(d3.select(this)._groups[0][0].__data__.values.Year);
+            var svg = d3.select("body")
+                          .append("svg").attr("id","lalala")
+                          .attr("width", width + padding.left + padding.right)
+                          .attr("height", height + padding.top + padding.bottom)
+                          .append("g")
+                          .attr("transform","translate(" + padding.left + "," + padding.top + ")");
+            d3.select(this).html(showpicture(b,a,svg))
+          }
+
+
+           function handleMouseOut(d) {
+            d3.select(this)
+              .attr('r','10');
+            d3.selectAll("#"+"lalala").remove();         
+          }
+
+
+
+      for (var i = 0; i < 4; i++){
+        var tmp1=[];
+        for (var j=0; j < 6; j++){
+            tmp1.push({
+              Region:data1[i].key,
+              values:{Year:data1[i].values[j].key,Number:+parseInt(data1[i].values[j].value["sum"])}})
+        }
+        tmp.push(tmp1);
+      }
+      // console.log('llllllllllllllllllll')
+      // console.log(tmp)
+      // console.log(tmp[0].values)
+      // console.log(tmp[0][0].values.Year)
+
+      var size = 40
+          svg.selectAll("mydots")
+            .data(tmp)
+            .enter()
+            .append("circle")
+              .attr("cx", 1550)
+              .attr("cy", function(d,i){ return i*(size+5)-20}) 
+              .attr("r", "15")
+              .style("fill", function(d){ return myColor[d[0].Region]})
+
+
+          svg.selectAll("mylabels")
+            .data(regions)
+            .enter()
+            .append("text")
+              .attr("x", 1550 + size*1.2)
+              .attr("y", function(d,i){ return i*(size+5) + (size/2)-35}) 
+              .style("fill", "black")
+              .text(d=>d)
+              .attr("text-anchor", "left")
+              .attr("font-size", "25px")
+              .style("alignment-baseline", "middle")  
+
+
+      var line = d3.line()
+                   .x(d=> +x(d3.timeParse("%Y")(d.values.Year)))
+                   .y(d=> +y(d.values.Number))
+
+          svg.selectAll("myLines")
+              .data(tmp)
+              .enter()
+              .append("path")
+              .attr("d", d=>line(d))
+              .attr("stroke", d=>myColor[d[0].Region])
+              .style("stroke-width", 5)
+              .style("fill", "none")   
+
+                
+
+        svg.selectAll("myDots")
+           .data(tmp)
+           .enter()
+           .append('g')
+           .style("fill", d=>myColor[d[0].Region])
+           .selectAll("myPoints")
+           .data(d=>d)
+           .enter()
+           .append("circle")
+           .attr("cx", d=>x(d3.timeParse("%Y")(d.values.Year)))
+           .attr("cy", d=>y(d.values.Number))
+           .attr("r", "10")
+           .on("mouseover", handleMouseOver)
+           .on("mouseleave",handleMouseOut)   
+
+     
+})
+
+        function showpicture(Year,Region,svg)
+        {
+          d3.csv("state-year-earthquakes.csv").then(function(data){
+            
+            var Data=[];
+
+            data.map(function(d){
+              if( d.region == Region && d.year == Year ){
+                Data.push({
+                  state: d.state, 
+                  count: parseInt(d.count)})
+              }
+            })
+
+            Data.sort(function(i, j){
+              return d3.ascending(i.count, j.count);
+            })
+
+            var States = d3.map(Data, function(d){return d.state}).keys()
+
+            svg.append("text")
+              .attr("x", width/2)
+              .attr("y", 0)
+              .attr("text-anchor", "middle")
+              .style("font-size", "40px")
+              .text(Region +"   "+ "Region Earthquakes"+"   "+Year); 
+
+            var wScale = d3.scaleLinear()
+              .domain([0, d3.max(Data, d=>d.count)])
+              .range([ padding.left, width-padding.right-padding.left]);                      
+
+            var xScale = d3.scaleLinear()
+              .domain([0, d3.max(Data, d=>d.count)])
+              .range([ padding.left, width-padding.right]);
+
+            svg.append("g")
+               .attr("class", "x axis")
+               .attr("transform", "translate(0," + (height-padding.bottom) + ")")
+               .call(d3.axisBottom(xScale).ticks(10))
+               .style("font-size", "25px");
+
+            var wScale = d3.scaleLinear()
+              .domain([0, d3.max(Data, d=>d.count)])
+              .range([ padding.left, width-padding.right-padding.left]);
+
+
+            var yScale = d3.scaleBand()
+              .domain(States)
+              .range([height-padding.bottom, padding.top]);
+            svg.append("g")
+               .attr("class", "y axis")
+               .attr("transform", "translate(" + (padding.right-10) + ",0)")
+               .call(d3.axisLeft(yScale))
+               .style("font-size", "25px");
+
+            svg.selectAll("rect")
+              .data(Data)
+              .enter()
+              .append("rect")
+              .attr("class", "rect")
+              .attr("x", xScale(0))
+              .attr("y", d=> yScale(d.state) )
+              .attr("width", d=> wScale(d.count))
+              .attr("height", yScale.bandwidth() - interval)
+              .style("stroke-width", 3)
+              .style("stroke", "white")
+              .attr("fill","purple")
+
+            })}
+
+
+
+
+
+              </script>
+  
+</body>
+</html>
